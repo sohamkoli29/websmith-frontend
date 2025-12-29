@@ -47,6 +47,7 @@ const categoryOptions = [
   'Testing',
   'Tools',
   'Soft Skills',
+  'Programming Language',
   'Other'
 ];
 
