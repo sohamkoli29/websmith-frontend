@@ -70,7 +70,7 @@ const Skills = () => {
   const [editingSkill, setEditingSkill] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState(null);
-
+  
   const {
     register,
     handleSubmit,
@@ -626,23 +626,43 @@ const Skills = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Color
-              </label>
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-10 h-10 rounded-lg border border-gray-300"
-                  style={{ backgroundColor: selectedColor }}
-                />
-                <Input
-                  type="text"
-                  placeholder="#3B82F6"
-                  {...register('color')}
-                  className="flex-1"
-                />
-              </div>
-            </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Color
+  </label>
+
+  <div className="flex items-center gap-3">
+    {/* Color Preview */}
+    <div
+      className="w-10 h-10 rounded-lg border border-gray-300"
+      style={{ backgroundColor: selectedColor }}
+    />
+
+    {/* Color Picker */}
+    <input
+      type="color"
+      value={selectedColor}
+      onChange={(e) => setValue('color', e.target.value)}
+      className="w-10 h-10 cursor-pointer rounded-lg border border-gray-300 p-0"
+    />
+
+    {/* Hex Code Input */}
+    <input
+      type="text"
+      {...register('color')}
+      placeholder="#3B82F6"
+      className="flex-1 rounded-md border  text-black border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+
+  {errors.color && (
+    <p className="text-sm text-red-500 mt-1">
+      {errors.color.message}
+    </p>
+  )}
+</div>
+
+
           </div>
 
           <Input
