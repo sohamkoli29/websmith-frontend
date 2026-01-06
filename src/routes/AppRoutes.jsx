@@ -12,6 +12,8 @@ import Blogs from '../pages/content/Blogs';
 import Testimonials from '../pages/content/Testimonials';
 import Experience from '../pages/content/Experience';
 import Services from '../pages/content/Services';
+import Certificates from '../pages/content/Certificates'; 
+import Achievements from '../pages/content/Achievements';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import MediaList from '../pages/media/MediaList';
 import UploadMedia from '../pages/media/Upload';
@@ -92,6 +94,8 @@ const AppRoutes = () => {
         <Route path="testimonials" element={<Testimonials />} />
         <Route path="experience" element={<Experience />} />
         <Route path="services" element={<Services />} />
+         <Route path="certificates" element={<Certificates />} />  
+        <Route path="achievements" element={<Achievements />} />
         <Route path="messages" element={<Messages />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="media" element={<MediaList />} />

@@ -162,6 +162,75 @@ const contentService = {
   submitContactForm(data) {
     return api.post('/content/contact', data);
   },
+
+ // Certificates
+  getCertificates(params) {
+    return api.get('/certificates', { params });
+  },
+  
+  getCertificate(id) {
+    return api.get(`/certificates/${id}`);
+  },
+  
+  createCertificate(data) {
+    // Transform data to match backend expectations
+    const certificateData = {
+      title: data.title,
+      issuer: data.issuer,
+      issue_date: data.issue_date,
+      credential_id: data.credential_id,
+       // Map from frontend's credential_url to backend's verification_url
+      image_url: data.image_url,
+      description: data.description,
+      featured: data.featured,
+      sort_order: data.sort_order || 0
+    };
+    
+    return api.post('/certificates', certificateData);
+  },
+  
+  updateCertificate(id, data) {
+    // Transform data to match backend expectations
+    const certificateData = {
+      title: data.title,
+      issuer: data.issuer,
+      issue_date: data.issue_date,
+      credential_id: data.credential_id,
+ // Map from frontend's credential_url to backend's verification_url
+      image_url: data.image_url,
+      description: data.description,
+      featured: data.featured,
+      sort_order: data.sort_order || 0
+    };
+    
+    return api.put(`/certificates/${id}`, certificateData);
+  },
+  
+  deleteCertificate(id) {
+    return api.delete(`/certificates/${id}`);
+  },
+
+  // Achievements
+  getAchievements(params) {
+    return api.get('/achievements', { params });
+  },
+  
+  getAchievement(id) {
+    return api.get(`/achievements/${id}`);
+  },
+  
+  createAchievement(data) {
+    return api.post('/achievements', data);
+  },
+  
+  updateAchievement(id, data) {
+    return api.put(`/achievements/${id}`, data);
+  },
+  
+  deleteAchievement(id) {
+    return api.delete(`/achievements/${id}`);
+  },
+
 };
 
 export default contentService;

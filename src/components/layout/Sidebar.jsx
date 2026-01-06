@@ -13,7 +13,9 @@ import {
   Image,
   BarChart3,
   Mail,
-  Award
+  Award,
+  Trophy,
+  BadgeCheck   
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen = true, onClose }) => {
@@ -44,6 +46,16 @@ const Sidebar = ({ isOpen = true, onClose }) => {
       title: 'Blogs',
       icon: FileText,
       path: '/blogs',
+    },
+     {
+      title: 'Certificates',    
+      icon: BadgeCheck,
+      path: '/certificates',
+    },
+    {
+      title: 'Achievements',    
+      icon: Trophy,
+      path: '/achievements',
     },
     {
       title: 'Experience',
