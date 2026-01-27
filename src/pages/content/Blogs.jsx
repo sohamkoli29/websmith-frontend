@@ -21,7 +21,8 @@ import {
   ExternalLink,
   Clock,
   TrendingUp,
-  FileText
+  FileText,
+  Upload
 } from 'lucide-react';
 import { Card } from '../../components/ui';
 import { Button, Input, Modal } from '../../components/ui';
@@ -29,7 +30,8 @@ import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import ErrorMessage from '../../components/shared/ErrorMessage';
 import SuccessMessage from '../../components/shared/SuccessMessage';
 import contentService from '../../services/content';
-
+// Add this import near other service imports
+import mediaService from '../../services/media'; // or your actual media service path
 // Updated schema - removed content validation since it's handled separately
 const blogSchema = yup.object({
   title: yup.string().required('Title is required'),
@@ -65,6 +67,12 @@ const Blogs = () => {
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
   const [content, setContent] = useState('');
+const [selectedFile, setSelectedFile] = useState(null);
+const [isDragActive, setIsDragActive] = useState(false);
+const [manualUrl, setManualUrl] = useState('');
+const [isUploadingImage, setIsUploadingImage] = useState(false);
+const [imageError, setImageError] = useState('');
+
 
   const {
     register,
@@ -87,6 +95,103 @@ const Blogs = () => {
 
   const watchPublished = watch('published');
   const watchTitle = watch('title');
+
+
+const handleImageUpload = async () => {
+  if (!selectedFile) {
+    setImageError('Please select a file first');
+    return;
+  }
+  
+  try {
+    setIsUploadingImage(true);
+    setImageError(null);
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('type', 'blog');
+    formData.append('folder', 'blogs');
+    
+    const response = await mediaService.uploadFile(formData);
+    
+    if (response.data.success) {
+      const imageUrl = response.data.data.upload.url;
+      setValue('cover_image', imageUrl, { shouldDirty: true });
+      setSelectedFile(null);
+      setSuccess('Cover image uploaded successfully!');
+      setImageModalOpen(false);
+      
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
+    } else {
+      throw new Error(response.data.error || 'Upload failed');
+    }
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    setImageError(error.message || 'Failed to upload image. Please try again.');
+  } finally {
+    setIsUploadingImage(false);
+  }
+};
+
+// Add this function for drag and drop
+const handleImageDrop = async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setIsDragActive(false);
+  
+  const files = e.dataTransfer.files;
+  if (files && files[0]) {
+    const file = files[0];
+    
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('File size exceeds 5MB limit');
+      return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setImageError('Invalid file type. Please upload an image (JPG, PNG, WebP, GIF)');
+      return;
+    }
+    
+    setSelectedFile(file);
+    setImageError(null);
+    setManualUrl(''); // Clear manual URL if file is selected
+  }
+};
+
+// Add these functions near other function declarations
+const handleFileSelect = (e) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('File size exceeds 5MB limit');
+      return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setImageError('Invalid file type. Please upload an image (JPG, PNG, WebP, GIF)');
+      return;
+    }
+    
+    setSelectedFile(file);
+    setImageError(null);
+    setManualUrl(''); // Clear manual URL if file is selected
+  }
+};
+
+const removeSelectedFile = () => {
+  setSelectedFile(null);
+  setImageError(null);
+};
+
 
 useEffect(() => {
   const token = localStorage.getItem('accessToken');
@@ -827,78 +932,213 @@ useEffect(() => {
       </Modal>
 
       {/* Image Upload Modal */}
-      <Modal
-        isOpen={imageModalOpen}
-        onClose={() => setImageModalOpen(false)}
-        title="Upload Cover Image"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Drag & drop your cover image here</p>
-            <p className="text-sm text-gray-500 mt-1">or</p>
-            <Button type="button" variant="outline" className="mt-4">
-              Browse Files
-            </Button>
-            <p className="text-xs text-gray-500 mt-4">
-              Supports JPG, PNG, WebP • Max 5MB • Recommended: 1200x630px
-            </p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=630&fit=crop',
-              'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=630&fit=crop',
-              'https://images.unsplash.com/photo-1523437113738-bbd3cc89fb19?w=1200&h=630&fit=crop',
-              'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=1200&h=630&fit=crop',
-              'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=630&fit=crop',
-              'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=630&fit=crop'
-            ].map((url, i) => (
-              <div
-                key={i}
-                className="aspect-video border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-blue-500 transition-colors"
-                onClick={() => {
-                  setValue('cover_image', url);
-                  setImageModalOpen(false);
-                }}
-              >
-                <img src={url} alt={`Preset ${i + 1}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <Input
-              placeholder="Or enter image URL directly"
-              className="flex-1 mr-4"
-              id="manual-image-url"
-            />
-            <div className="flex items-center gap-3">
-              <Button
+// Replace the entire Image Upload Modal section in Blogs.jsx (starting from line ~1340)
+{/* Image Upload Modal */}
+<Modal
+  isOpen={imageModalOpen}
+  onClose={() => setImageModalOpen(false)}
+  title="Upload Cover Image"
+  size="lg"
+>
+  <div className="space-y-6">
+    {/* File Upload Section */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-3">
+        Upload from Device
+      </label>
+     <div
+  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+    isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+  }`}
+  onDragOver={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  }}
+  onDragEnter={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  }}
+  onDragLeave={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  }}
+  onDrop={handleImageDrop}
+>
+        {selectedFile ? (
+          <div className="space-y-4">
+            <div className="relative mx-auto w-48 h-48">
+              <img
+                src={URL.createObjectURL(selectedFile)}
+                alt="Preview"
+                className="w-full h-full object-cover rounded-lg"
+              />
+              <button
                 type="button"
-                variant="outline"
-                onClick={() => setImageModalOpen(false)}
+                onClick={() => setSelectedFile(null)}
+                className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
               >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => {
-                  const urlInput = document.getElementById('manual-image-url');
-                  if (urlInput && urlInput.value) {
-                    setValue('cover_image', urlInput.value);
-                  }
-                  setImageModalOpen(false);
-                }}
-              >
-                Use Image
-              </Button>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {selectedFile.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+              </p>
             </div>
           </div>
-        </div>
-      </Modal>
+        ) : (
+          <>
+            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">Drag & drop your cover image here</p>
+            <p className="text-sm text-gray-500 mt-1">or</p>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4"
+              onClick={() => document.getElementById('file-upload-input').click()}
+              disabled={isUploadingImage}
+            >
+                {isUploadingImage ? 'Uploading...' : 'Browse Files'}
+            </Button>
+            <input
+              id="file-upload-input"
+              type="file"
+              accept="image/*"
+              className="hidden"
+          onChange={handleFileSelect}
+            />
+          </>
+        )}
+        <p className="text-xs text-gray-500 mt-4">
+          Supports JPG, PNG, WebP • Max 5MB • Recommended: 1200x630px
+        </p>
+      </div>
+    </div>
+
+    {/* Preset Images */}
+    <div>
+      <p className="text-sm font-medium text-gray-700 mb-3">Or choose from preset images:</p>
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=630&fit=crop',
+          'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=630&fit=crop',
+          'https://images.unsplash.com/photo-1523437113738-bbd3cc89fb19?w=1200&h=630&fit=crop',
+          'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=1200&h=630&fit=crop',
+          'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=630&fit=crop',
+          'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=630&fit=crop'
+        ].map((url, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              setValue('cover_image', url, { shouldDirty: true });
+              setImageModalOpen(false);
+              setSelectedFile(null);
+            }}
+            className="aspect-video border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <img src={url} alt={`Preset ${i + 1}`} className="w-full h-full object-cover" />
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* Manual URL Input */}
+    <div>
+      <p className="text-sm font-medium text-gray-700 mb-3">Or enter image URL manually:</p>
+      <div className="flex gap-3">
+        <Input
+          type="url"
+          placeholder="https://example.com/image.jpg"
+          className="flex-1"
+          value={manualUrl}
+          onChange={(e) => setManualUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && manualUrl.trim()) {
+              setValue('cover_image', manualUrl.trim(), { shouldDirty: true });
+              setImageModalOpen(false);
+              setSelectedFile(null);
+              setManualUrl('');
+            }
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            if (manualUrl.trim()) {
+              setValue('cover_image', manualUrl.trim(), { shouldDirty: true });
+              setImageModalOpen(false);
+              setSelectedFile(null);
+              setManualUrl('');
+            }
+          }}
+          disabled={!manualUrl.trim()}
+        >
+          Use URL
+        </Button>
+      </div>
+    </div>
+
+    {/* Error Message */}
+    {error && (
+      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-sm text-red-800">{error}</p>
+      </div>
+    )}
+
+    {/* Action Buttons */}
+    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          setImageModalOpen(false);
+          setSelectedFile(null);
+          setManualUrl('');
+          setError(null);
+        }}
+        disabled={isUploadingImage}
+      >
+        Cancel
+      </Button>
+      
+      <div className="flex items-center gap-3">
+        {selectedFile && (
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleImageUpload}
+            isLoading={isUploadingImage}
+            disabled={isUploadingImage}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Image
+          </Button>
+        )}
+        
+        <Button
+          type="button"
+          variant="primary"
+          onClick={() => {
+            setImageModalOpen(false);
+            setSelectedFile(null);
+            setManualUrl('');
+            setError(null);
+          }}
+        >
+          Done
+        </Button>
+      </div>
+    </div>
+  </div>
+</Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal
