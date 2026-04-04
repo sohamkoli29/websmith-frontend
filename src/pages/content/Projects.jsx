@@ -353,7 +353,7 @@ const Projects = () => {
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Projects</option>
               <option value="featured">Featured Only</option>
@@ -488,7 +488,7 @@ const Projects = () => {
                 </label>
                 <textarea
                   rows={6}
-                  className={`w-full text-black px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full  px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.description ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Describe your project in detail..."
@@ -501,7 +501,7 @@ const Projects = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Short Description (Optional)</label>
                 <textarea
                   rows={2}
-                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Brief summary for project cards"
                   {...register('short_description')}
                 />
@@ -516,7 +516,7 @@ const Projects = () => {
                     <img src={watchImageUrl} alt="Project preview" className="w-full h-48 object-cover rounded-lg" />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <label className="cursor-pointer">
-                        <Button variant="outline" size="sm" className="text-white border-white hover:bg-white hover:text-black" type="button">
+                        <Button variant="outline" size="sm" className="text-white border-white hover:bg-white hover:" type="button">
                           Change Image
                         </Button>
                         <input

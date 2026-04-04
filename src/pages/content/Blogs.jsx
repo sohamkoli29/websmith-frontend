@@ -523,7 +523,7 @@ useEffect(() => {
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Posts</option>
               <option value="published">Published Only</option>
@@ -749,7 +749,7 @@ useEffect(() => {
                   theme="snow"
                   value={content}
                   onChange={setContent}
-                  className="h-96 text-black mb-12"
+                  className="h-96  mb-12"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Minimum 100 characters required
@@ -776,7 +776,7 @@ useEffect(() => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="text-white border-white hover:bg-white hover:text-black"
+                        className="text-white border-white hover:bg-white hover:"
                         onClick={() => setImageModalOpen(true)}
                       >
                         Change Image
@@ -808,7 +808,7 @@ useEffect(() => {
                 </label>
                 <textarea
                   rows={4}
-                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Brief summary for blog listings..."
                   {...register('excerpt')}
                 />

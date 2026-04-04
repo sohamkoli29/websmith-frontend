@@ -426,7 +426,7 @@ const Achievements = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
               {categoryOptions.map(cat => (
@@ -440,7 +440,7 @@ const Achievements = () => {
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Achievements</option>
               <option value="featured">Featured Only</option>
@@ -551,14 +551,14 @@ const Achievements = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description <span className="text-red-500">*</span>
             </label>
-            <textarea rows={3} className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Describe your achievement..." {...register('description')} />
+            <textarea rows={3} className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Describe your achievement..." {...register('description')} />
             {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
-              <select className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" {...register('category')}>
+              <select className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" {...register('category')}>
                 {categoryOptions.map(cat => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
                 ))}
@@ -592,7 +592,7 @@ const Achievements = () => {
             type="button"
             variant="outline"
             size="sm"
-            className="text-white border-white hover:bg-white hover:text-black"
+            className="text-white border-white hover:bg-white hover:"
             disabled={isUploadingImage}
           >
             {isUploadingImage ? 'Uploading...' : 'Change Image'}
@@ -649,7 +649,7 @@ const Achievements = () => {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg border border-gray-300" style={{ backgroundColor: watchColor }} />
               <input type="color" value={watchColor} onChange={(e) => setValue('color', e.target.value)} className="w-10 h-10 cursor-pointer rounded-lg border border-gray-300 p-0" />
-              <input type="text" {...register('color')} placeholder="#3B82F6" className="flex-1 text-black rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="text" {...register('color')} placeholder="#3B82F6" className="flex-1  rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 

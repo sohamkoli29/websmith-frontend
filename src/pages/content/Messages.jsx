@@ -646,7 +646,7 @@ const Messages = () => {
             </label>
             <textarea
               rows={6}
-              className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Type your reply here..."
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}

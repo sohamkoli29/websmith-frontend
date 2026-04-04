@@ -1,25 +1,20 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
 
-const SuccessMessage = ({ message, onDismiss, className = '' }) => {
-  return (
-    <div className={`p-4 bg-green-50 border border-green-200 rounded-lg ${className}`}>
-      <div className="flex items-start">
-        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-        <div className="flex-1">
-          <p className="text-sm text-green-800">{message}</p>
-          {onDismiss && (
-            <button
-              onClick={onDismiss}
-              className="mt-2 text-sm font-medium text-green-700 hover:text-green-800"
-            >
-              Dismiss
-            </button>
-          )}
-        </div>
-      </div>
+const SuccessMessage = ({ message, onDismiss, className = '' }) => (
+  <div className={`alert alert-success ${className}`} style={{ justifyContent: 'space-between' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <CheckCircle size={15} style={{ flexShrink: 0 }} />
+      <p style={{ margin: 0 }}>{message}</p>
     </div>
-  );
-};
+    {onDismiss && (
+      <button onClick={onDismiss} style={{
+        background: 'none', border: 'none', color: '#86efac',
+        cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1,
+        padding: '0 4px', flexShrink: 0
+      }}>×</button>
+    )}
+  </div>
+);
 
 export default SuccessMessage;

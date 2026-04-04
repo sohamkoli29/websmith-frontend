@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -6,20 +6,40 @@ import Header from './Header';
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Close sidebar on route change / resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1025) setSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
+    <div className="admin-layout" style={{ background: 'var(--bg-primary)', minHeight: '100vh' }}>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 35,
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(4px)'
+          }}
+        />
+      )}
+
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      
-      <div className="lg:pl-64">
+
+      <div className="admin-main" style={{ marginLeft: 'var(--sidebar-width)' }}>
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        
-        <main className="py-6">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <Outlet />
-          </div>
+
+        <main className="admin-content fade-in">
+          <Outlet />
         </main>
       </div>
     </div>

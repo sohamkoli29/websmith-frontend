@@ -233,7 +233,7 @@ const handleImageUpload = async (fileOrUrl) => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-white border-white hover:bg-white hover:text-black"
+                        className="text-white border-white hover:bg-white hover:"
                         onClick={() => setImageModalOpen(true)}
                       >
                         Change Image
@@ -324,7 +324,7 @@ const handleImageUpload = async (fileOrUrl) => {
   </label>
   <textarea
     rows={6}
-    className={`w-full text-black px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+    className={`w-full  px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
       errors.description 
         ? 'border-red-500 focus:ring-red-500' 
         : 'border-gray-300'

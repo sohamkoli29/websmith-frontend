@@ -583,7 +583,7 @@ const Skills = () => {
               Category <span className="text-red-500">*</span>
             </label>
             <select
-              className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               {...register('category')}
             >
               {categoryOptions.map(category => (
@@ -617,7 +617,7 @@ const Skills = () => {
                 Icon Name
               </label>
               <select
-                className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full  px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 {...register('icon')}
               >
                 {iconOptions.map(icon => (
@@ -651,7 +651,7 @@ const Skills = () => {
       type="text"
       {...register('color')}
       placeholder="#3B82F6"
-      className="flex-1 rounded-md border  text-black border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="flex-1 rounded-md border   border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
   </div>
 

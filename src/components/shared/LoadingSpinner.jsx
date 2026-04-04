@@ -1,16 +1,16 @@
 import React from 'react';
 
 const LoadingSpinner = ({ size = 'md', className = '' }) => {
-  const sizes = {
-    sm: 'w-4 h-4',
-    md: 'w-8 h-8',
-    lg: 'w-12 h-12',
-    xl: 'w-16 h-16',
-  };
-  
+  const px = { sm: 18, md: 32, lg: 48, xl: 64 }[size] || 32;
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <div className={`${sizes[size]} animate-spin rounded-full border-4 border-gray-300 border-t-blue-600`} />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }} className={className}>
+      <div style={{
+        width: px, height: px,
+        border: '2px solid rgba(124,58,237,0.15)',
+        borderTopColor: '#7c3aed',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite'
+      }} />
     </div>
   );
 };

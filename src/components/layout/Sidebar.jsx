@@ -1,170 +1,117 @@
 import React from 'react';
 import { useMessages } from '../../context/MessagesContext';
 import { NavLink } from 'react-router-dom';
-import { 
-  Home, 
-  User, 
-  Code, 
-  Briefcase, 
-  FileText, 
-  Calendar,
-  MessageSquare,
-  Settings,
-  Image,
-  BarChart3,
-  Mail,
-  Award,
-  Trophy,
-  BadgeCheck   
+import {
+  Home, User, Code, Briefcase, FileText, MessageSquare,
+  Settings, Image, BarChart3, Mail, Award, Trophy, BadgeCheck, X, Code2
 } from 'lucide-react';
 
+const menuItems = [
+  { title: 'Dashboard',     icon: Home,          path: '/', exact: true },
+  { title: 'About',         icon: User,          path: '/about' },
+  { title: 'Skills',        icon: Award,         path: '/skills' },
+  { title: 'Projects',      icon: Code,          path: '/projects' },
+  { title: 'Blogs',         icon: FileText,      path: '/blogs' },
+  { title: 'Certificates',  icon: BadgeCheck,    path: '/certificates' },
+  { title: 'Achievements',  icon: Trophy,        path: '/achievements' },
+  { title: 'Experience',    icon: Briefcase,     path: '/experience' },
+  { title: 'Testimonials',  icon: MessageSquare, path: '/testimonials' },
+  { title: 'Services',      icon: Settings,      path: '/services' },
+  { title: 'Media Library', icon: Image,         path: '/media' },
+  { title: 'Messages',      icon: Mail,          path: '/messages' },
+  { title: 'Analytics',     icon: BarChart3,     path: '/analytics' },
+];
+
 const Sidebar = ({ isOpen = true, onClose }) => {
-    const { unreadCount } = useMessages();
-  const menuItems = [
-    {
-      title: 'Dashboard',
-      icon: Home,
-      path: '/',
-      exact: true,
-    },
-    {
-      title: 'About',
-      icon: User,
-      path: '/about',
-    },
-    {
-      title: 'Skills',
-      icon: Award,
-      path: '/skills',
-    },
-    {
-      title: 'Projects',
-      icon: Code,
-      path: '/projects',
-    },
-    {
-      title: 'Blogs',
-      icon: FileText,
-      path: '/blogs',
-    },
-     {
-      title: 'Certificates',    
-      icon: BadgeCheck,
-      path: '/certificates',
-    },
-    {
-      title: 'Achievements',    
-      icon: Trophy,
-      path: '/achievements',
-    },
-    {
-      title: 'Experience',
-      icon: Briefcase,
-      path: '/experience',
-    },
-    {
-      title: 'Testimonials',
-      icon: MessageSquare,
-      path: '/testimonials',
-    },
-    {
-      title: 'Services',
-      icon: Settings,
-      path: '/services',
-    },
-    {
-      title: 'Media Library',
-      icon: Image,
-      path: '/media',
-    },
-   {
-    title: 'Messages',
-    icon: Mail,
-    path: '/messages',
-    badge: unreadCount > 0 ? unreadCount : null,
-  },
-    {
-      title: 'Analytics',
-      icon: BarChart3,
-      path: '/analytics',
-    },
-  ];
+  const { unreadCount } = useMessages();
 
   return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-gray-600 bg-opacity-75 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+    <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`}>
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 z-40 h-screen w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {/* Logo */}
-        <div className="px-6 py-4 border-b border-gray-800">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-              <Code className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">Websmith CMS</h1>
-              <p className="text-xs text-gray-400">Admin Panel</p>
-            </div>
+      {/* Logo area */}
+      <div style={{
+        padding: '20px 16px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '34px', height: '34px', flexShrink: 0,
+            background: 'linear-gradient(135deg,#7c3aed,#ec4899)',
+            borderRadius: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Code2 size={16} color="white" />
+          </div>
+          <div>
+            <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '0.92rem', color: '#f1f0ff', margin: 0, lineHeight: 1.2 }}>
+              Websmith
+            </p>
+            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0, marginTop: '2px' }}>CMS Admin</p>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-4 overflow-y-auto h-[calc(100vh-5rem)]">
-          <ul className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.path}>
-                  <NavLink
-                    to={item.path}
-                    end={item.exact}
-                    className={({ isActive }) =>
-                      `flex items-center px-4 py-3 rounded-lg transition-colors ${
-                        isActive
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                      }`
-                    }
-                  >
-                    <Icon className="w-5 h-5 mr-3" />
-                    <span className="flex-1">{item.title}</span>
-                    {item.badge && (
-                      <span className="px-2 py-1 text-xs font-medium bg-red-500 text-white rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
-                  </NavLink>
-                </li>
-              );
-            })}
-          </ul>
+        {/* Mobile close button — shown via CSS */}
+        <button
+          onClick={onClose}
+          id="sidebar-close-btn"
+          style={{
+            display: 'none',
+            background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
+            borderRadius: '7px', padding: '6px', cursor: 'pointer', color: 'var(--text-muted)',
+            alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <X size={15} />
+        </button>
+      </div>
 
-          {/* User info */}
-          <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium">Admin User</p>
-                <p className="text-xs text-gray-400">Administrator</p>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </aside>
-    </>
+      {/* Navigation */}
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 10px' }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isMsgs = item.path === '/messages';
+            return (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  end={item.exact}
+                  onClick={onClose}
+                  className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                >
+                  <Icon size={15} style={{ flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>{item.title}</span>
+                  {isMsgs && unreadCount > 0 && (
+                    <span style={{
+                      background: 'linear-gradient(135deg,#7c3aed,#ec4899)',
+                      color: 'white', fontSize: '0.6rem', fontWeight: 700,
+                      padding: '2px 7px', borderRadius: '99px',
+                    }}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Version */}
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+        <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+          Portfolio CMS v1.0.0
+        </p>
+      </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #sidebar-close-btn { display: flex !important; }
+        }
+      `}</style>
+    </aside>
   );
 };
 

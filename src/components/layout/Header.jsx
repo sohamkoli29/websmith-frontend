@@ -1,100 +1,171 @@
-  import React from 'react';
-  import { Bell, Search, User, Menu, LogOut } from 'lucide-react';
-  import { useAuth } from '../../context/AuthContext';
-  import { Button } from '../ui';
+import React, { useState } from 'react';
+import { Bell, Search, User, Menu, LogOut, ChevronDown } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
-  const Header = ({ onMenuClick }) => {
-    const { user, logout } = useAuth();
+const Header = ({ onMenuClick }) => {
+  const { user, logout } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-    return (
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Left section */}
-            <div className="flex items-center">
-              <button
-                onClick={onMenuClick}
-                className="p-2 text-gray-500 hover:text-gray-600 lg:hidden"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              
-              {/* Search */}
-              <div className="ml-4 lg:ml-0 relative">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="pl-10 text-black pr-4 py-2 w-full lg:w-64 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+  return (
+    <header className="admin-header">
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%', gap: '16px',
+      }}>
+
+        {/* Left side */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+          {/* Hamburger */}
+          <button
+            id="hamburger-btn"
+            onClick={onMenuClick}
+            style={{
+              display: 'none',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px', padding: '8px',
+              cursor: 'pointer', color: 'var(--text-secondary)',
+              alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Menu size={17} />
+          </button>
+
+          {/* Search box */}
+          <div style={{ position: 'relative', flex: 1, maxWidth: '280px' }} id="header-search">
+            <Search size={13} style={{
+              position: 'absolute', left: '11px',
+              top: '50%', transform: 'translateY(-50%)',
+              color: 'var(--text-muted)', pointerEvents: 'none',
+            }} />
+            <input
+              type="text"
+              placeholder="Search..."
+              style={{
+                width: '100%',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '8px 12px 8px 32px',
+                color: 'var(--text-primary)',
+                fontSize: '0.8rem',
+                outline: 'none',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Right side */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+
+          {/* Bell */}
+          <button style={{
+            position: 'relative',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px', padding: '8px',
+            cursor: 'pointer', color: 'var(--text-secondary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Bell size={16} />
+            <span style={{
+              position: 'absolute', top: '6px', right: '6px',
+              width: '6px', height: '6px',
+              background: '#ec4899', borderRadius: '50%',
+              border: '1.5px solid var(--bg-primary)',
+            }} />
+          </button>
+
+          {/* User menu */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                background: 'rgba(124,58,237,0.08)',
+                border: '1px solid rgba(124,58,237,0.2)',
+                borderRadius: '10px', padding: '7px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{
+                width: '28px', height: '28px', flexShrink: 0,
+                background: 'linear-gradient(135deg,#7c3aed,#ec4899)',
+                borderRadius: '8px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <User size={13} color="white" />
               </div>
-            </div>
+              <div id="header-user-info" style={{ textAlign: 'left' }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f1f0ff', margin: 0, lineHeight: 1.2 }}>
+                  {user?.name?.split(' ')[0] || 'Admin'}
+                </p>
+                <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', margin: 0, marginTop: '1px' }}>
+                  Administrator
+                </p>
+              </div>
+              <ChevronDown size={12} color="var(--text-muted)" id="header-chevron" />
+            </button>
 
-            {/* Right section */}
-            <div className="flex items-center gap-4">
-              {/* Notifications */}
-              <button className="p-2 text-gray-500 hover:text-gray-600 relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
-
-              {/* User dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div className="hidden lg:block text-left">
-                    <p className="text-sm font-medium text-gray-900">
+            {dropdownOpen && (
+              <>
+                <div
+                  onClick={() => setDropdownOpen(false)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+                />
+                <div style={{
+                  position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid rgba(124,58,237,0.2)',
+                  borderRadius: '12px', minWidth: '190px',
+                  boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+                  zIndex: 50, overflow: 'hidden',
+                }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f1f0ff', margin: 0 }}>
                       {user?.name || 'Admin User'}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
                       {user?.email || 'admin@portfolio.com'}
                     </p>
                   </div>
-                </button>
-
-                {/* Dropdown menu */}
-                <div className="
-  absolute right-0 top-full mt-2 w-48
-  bg-white rounded-lg shadow-lg border border-gray-200
-  opacity-0 pointer-events-none
-  group-hover:opacity-100 group-hover:pointer-events-auto
-  group-focus-within:opacity-100 group-focus-within:pointer-events-auto
-  transition-all duration-200
-">
-
-                  <div className="py-2">
-                    <a
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Profile Settings
-                    </a>
-                    <a
-                      href="/settings"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Account Settings
-                    </a>
-                    <div className="border-t border-gray-200 my-1" />
+                  <div style={{ padding: '6px' }}>
                     <button
-                      onClick={logout}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      onClick={() => { logout(); setDropdownOpen(false); }}
+                      style={{
+                        width: '100%', textAlign: 'left',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '8px 12px',
+                        background: 'none', border: 'none',
+                        borderRadius: '8px', color: '#f87171',
+                        fontSize: '0.82rem', cursor: 'pointer',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
                     >
-                      <LogOut className="w-4 h-4 mr-2" />
+                      <LogOut size={13} />
                       Sign Out
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
-      </header>
-    );
-  };
+      </div>
 
-  export default Header;
+      <style>{`
+        @media (max-width: 768px) {
+          #hamburger-btn { display: flex !important; }
+          #header-search { display: none !important; }
+          #header-user-info, #header-chevron { display: none !important; }
+        }
+      `}</style>
+    </header>
+  );
+};
+
+export default Header;
