@@ -42,7 +42,7 @@ const technologyOptions = [
   'Node.js', 'Express.js', 'Python', 'Django', 'Flask', 'PHP', 'Laravel',
   'PostgreSQL', 'MongoDB', 'MySQL', 'Redis', 'Docker', 'AWS', 'Firebase',
   'Tailwind CSS', 'Bootstrap', 'Material-UI', 'GraphQL', 'REST API',
-  'Git', 'GitHub', 'GitLab', 'CI/CD', 'Jest', 'Cypress','Supabase','WebRTC','Socket.io'
+  'Git', 'GitHub', 'GitLab', 'CI/CD', 'Jest', 'Cypress','Supabase','WebRTC','Socket.io','scikit-learn','TensorFlow','PyTorch','Keras','Flutter','Swift','Kotlin','NLTK','spaCy','OpenCV','Unity','Unreal Engine','Blender','Figma','Adobe XD'
 ];
 
 const Projects = () => {
