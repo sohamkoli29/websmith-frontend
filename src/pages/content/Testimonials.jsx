@@ -17,7 +17,8 @@ import {
   X,
   Quote,
   Eye,
-  EyeOff
+  EyeOff,
+  Loader2
 } from 'lucide-react';
 import { Card } from '../../components/ui';
 import { Button, Input, Modal } from '../../components/ui';
@@ -25,6 +26,7 @@ import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import ErrorMessage from '../../components/shared/ErrorMessage';
 import SuccessMessage from '../../components/shared/SuccessMessage';
 import contentService from '../../services/content';
+import mediaService from '../../services/media';
 
 const testimonialSchema = yup.object({
   name: yup.string().required('Name is required'),
@@ -54,6 +56,8 @@ const Testimonials = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [testimonialToDelete, setTestimonialToDelete] = useState(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const {
     register,
@@ -164,6 +168,70 @@ const Testimonials = () => {
     setModalOpen(false);
     setEditingTestimonial(null);
   };
+
+  // ---- Avatar upload logic (mirrors Certificates/Achievements) ----
+  const handleImageUpload = async (file) => {
+    if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size exceeds 5MB limit');
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload an image (JPG, PNG, WebP, GIF)');
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      setError(null);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'avatar');
+
+      const response = await mediaService.uploadFile(formData);
+
+      if (response.data.success) {
+        const imageUrl = response.data.data.upload.url;
+        setValue('avatar_url', imageUrl, { shouldValidate: true, shouldDirty: true });
+        setSuccess('Avatar uploaded successfully!');
+        setImageModalOpen(false);
+
+        setTimeout(() => {
+          setSuccess(null);
+        }, 3000);
+      } else {
+        throw new Error(response.data.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setError('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageUpload(file);
+  };
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      handleImageUpload(files[0]);
+    }
+  };
+  // -------------------------------------------------------------
 
   const onSubmit = async (data) => {
     try {
@@ -565,6 +633,7 @@ const Testimonials = () => {
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     className="text-white border-white hover:bg-white hover:"
@@ -704,59 +773,108 @@ const Testimonials = () => {
         </form>
       </Modal>
 
-      {/* Image Upload Modal */}
+      {/* Image Upload Modal — now fully functional (drag & drop + browse) */}
       <Modal
         isOpen={imageModalOpen}
-        onClose={() => setImageModalOpen(false)}
+        onClose={() => !isUploadingImage && setImageModalOpen(false)}
         title="Upload Avatar Image"
         size="md"
       >
         <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Drag & drop your avatar image here</p>
-            <p className="text-sm text-gray-500 mt-1">or</p>
-            <Button variant="outline" className="mt-4">
-              Browse Files
-            </Button>
-            <p className="text-xs text-gray-500 mt-4">
-              Supports JPG, PNG, WebP • Max 2MB • Recommended: 200x200px
-            </p>
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragActive(true);
+            }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragActive(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragActive(false);
+            }}
+            onDrop={handleImageDrop}
+          >
+            {isUploadingImage ? (
+              <>
+                <Loader2 className="w-12 h-12 text-gray-400 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Uploading image...</p>
+              </>
+            ) : (
+              <>
+                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Drag & drop your avatar image here</p>
+                <p className="text-sm text-gray-500 mt-1">or</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => document.getElementById('testimonial-avatar-input').click()}
+                >
+                  Browse Files
+                </Button>
+                <input
+                  id="testimonial-avatar-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+                <p className="text-xs text-gray-500 mt-4">
+                  Supports JPG, PNG, WebP, GIF • Max 5MB • Recommended: 200x200px
+                </p>
+              </>
+            )}
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div
-                key={i}
-                className="aspect-square border border-gray-200 rounded-full overflow-hidden cursor-pointer hover:border-blue-500 transition-colors"
-              >
-                <div className="w-full h-full bg-gray-100" />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <Input
-              placeholder="Or enter image URL directly"
-              className="flex-1 mr-4"
-            />
+          <div className="pt-4 border-t border-gray-200">
+            <p className="text-sm font-medium text-gray-700 mb-2">Or enter image URL directly</p>
             <div className="flex items-center gap-3">
+              <Input
+                placeholder="https://example.com/avatar.jpg"
+                className="flex-1"
+                id="testimonial-avatar-url-input"
+                disabled={isUploadingImage}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.target.value.trim()) {
+                    setValue('avatar_url', e.target.value.trim(), { shouldDirty: true });
+                    setImageModalOpen(false);
+                  }
+                }}
+              />
               <Button
+                type="button"
                 variant="outline"
-                onClick={() => setImageModalOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
+                disabled={isUploadingImage}
                 onClick={() => {
-                  setValue('avatar_url', 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200&h=200&fit=crop');
-                  setImageModalOpen(false);
+                  const urlInput = document.getElementById('testimonial-avatar-url-input');
+                  if (urlInput?.value.trim()) {
+                    setValue('avatar_url', urlInput.value.trim(), { shouldDirty: true });
+                    setImageModalOpen(false);
+                  }
                 }}
               >
-                Use Selected Image
+                Use URL
               </Button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-end pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setImageModalOpen(false)}
+              disabled={isUploadingImage}
+            >
+              Cancel
+            </Button>
           </div>
         </div>
       </Modal>
