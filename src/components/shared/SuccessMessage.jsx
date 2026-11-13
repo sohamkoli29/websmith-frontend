@@ -1,18 +1,13 @@
-import React from 'react';
 import { CheckCircle } from 'lucide-react';
 
 const SuccessMessage = ({ message, onDismiss, className = '' }) => (
-  <div className={`alert alert-success ${className}`} style={{ justifyContent: 'space-between' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <CheckCircle size={15} style={{ flexShrink: 0 }} />
-      <p style={{ margin: 0 }}>{message}</p>
+  <div role="status" className={`alert alert-success items-center justify-between ${className}`}>
+    <div className="flex items-center gap-2.5">
+      <CheckCircle size={16} className="shrink-0" />
+      <p>{message}</p>
     </div>
     {onDismiss && (
-      <button onClick={onDismiss} style={{
-        background: 'none', border: 'none', color: '#86efac',
-        cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1,
-        padding: '0 4px', flexShrink: 0
-      }}>×</button>
+      <button onClick={onDismiss} aria-label="Dismiss" className="px-1 text-lg leading-none">×</button>
     )}
   </div>
 );

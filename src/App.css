@@ -1,17 +1,4 @@
-/* App.css — overrides kept minimal; all core styles in index.css */
+/* Kept small: the CMS styles live in index.css. */
 
-/* Quill editor sizing */
+/* Blog editor height */
 .ql-editor { min-height: 280px; }
-
-/* Drag-over state for upload zones */
-.drag-over {
-  border-color: var(--accent-purple) !important;
-  background-color: rgba(124, 58, 237, 0.06) !important;
-}
-
-/* React-select dark overrides if used */
-.react-select__control {
-  background: rgba(255,255,255,0.04) !important;
-  border-color: rgba(124,58,237,0.18) !important;
-  color: var(--text-primary) !important;
-}

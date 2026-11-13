@@ -1,276 +1,224 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  BarChart3, FileText, Briefcase, MessageSquare,
-  ArrowUp, ArrowDown, Activity, Award, Trophy,
-  TrendingUp, Users, Eye, Calendar
+  ArrowUpRight, Award, Briefcase, Calendar, ExternalLink, FileText, MessageSquare, TrendingUp,
 } from 'lucide-react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { Card } from '../components/ui';
 import contentService from '../services/content';
+import { SITE_URL } from '../config/site';
+import { monthlyCounts, recentActivity, timeAgo } from '../utils/dashboardData';
+import Card from '../components/ui/Card';
+import ErrorMessage from '../components/shared/ErrorMessage';
+
+const SERIES = [
+  { key: 'projects', name: 'Projects', color: '#3a3fa8' },
+  { key: 'blogs', name: 'Blogs', color: '#f2a93b' },
+  { key: 'messages', name: 'Messages', color: '#1b1a17' },
+];
+
+const BADGE = { project: 'badge-blue', blog: 'badge-yellow', message: 'badge-green' };
+const TYPE_LABEL = { project: 'Project', blog: 'Blog', message: 'Message' };
+
+const list = (response) => response?.data?.data ?? [];
+
+async function fetchAll() {
+  const [projects, blogs, messages, skills] = await Promise.all([
+    contentService.getProjects(),
+    contentService.getBlogs(),
+    contentService.getMessages(),
+    contentService.getSkills(),
+  ]);
+  return { projects: list(projects), blogs: list(blogs), messages: list(messages), skills: list(skills) };
+}
+
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 shadow-lg">
+      <p className="mb-1 text-xs text-gray-500">{label}</p>
+      {payload.map((p) => (
+        <p key={p.dataKey} className="text-sm" style={{ color: p.color }}>
+          {p.name}: <strong className="text-ink">{p.value}</strong>
+        </p>
+      ))}
+    </div>
+  );
+}
 
 const Dashboard = () => {
-  const [stats, setStats] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [recentActivities, setRecentActivities] = useState([]);
-  const [chartData, setChartData] = useState([]);
+  const [state, setState] = useState({ status: 'loading', data: null });
+  const [attempt, setAttempt] = useState(0);
 
-  useEffect(() => { fetchAllData(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    fetchAll()
+      .then((data) => !cancelled && setState({ status: 'ready', data }))
+      .catch(() => !cancelled && setState({ status: 'error', data: null }));
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
 
-  const fetchAllData = async () => {
-    try {
-      setIsLoading(true);
-      const statsResponse = await contentService.getStats();
-      if (statsResponse.data.success) setStats(statsResponse.data.data);
-      await fetchRecentActivities();
-      await generateChartData();
-    } catch (e) {
-      console.error('Dashboard error:', e);
-    } finally {
-      setIsLoading(false);
-    }
+  const retry = () => {
+    setState({ status: 'loading', data: null });
+    setAttempt((n) => n + 1);
   };
 
-  const formatTimeAgo = (d) => {
-    const s = Math.floor((Date.now() - new Date(d)) / 1000);
-    if (s < 60) return 'just now';
-    if (s < 3600) return `${Math.floor(s/60)}m ago`;
-    if (s < 86400) return `${Math.floor(s/3600)}h ago`;
-    return `${Math.floor(s/86400)}d ago`;
-  };
+  const { data } = state;
+  const loading = state.status === 'loading';
+  const chart = useMemo(() => (data ? monthlyCounts(data) : []), [data]);
+  const activity = useMemo(() => (data ? recentActivity(data) : []), [data]);
 
-  const fetchRecentActivities = async () => {
-    try {
-      const activities = [];
-      const [pr, bl, ms] = await Promise.all([
-        contentService.getProjects(),
-        contentService.getBlogs(),
-        contentService.getMessages()
-      ]);
-      const push = (arr, type, label) => arr?.data?.data
-        ?.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
-        ?.slice(0, 2)
-        ?.forEach(x => activities.push({ id: `${type}-${x.id}`, user: x.name || x.author || 'Admin', action: `${label} "${x.title || x.name || 'item'}"`, time: formatTimeAgo(x.created_at), timestamp: new Date(x.created_at), type }));
-      push(pr, 'project', 'Added project');
-      push(bl, 'blog', 'Published blog');
-      ms?.data?.data?.slice(0,2).forEach(m => activities.push({ id: `msg-${m.id}`, user: m.name, action: 'sent a message', time: formatTimeAgo(m.created_at), timestamp: new Date(m.created_at), type: 'message' }));
-      setRecentActivities(activities.sort((a,b) => b.timestamp - a.timestamp).slice(0,5));
-    } catch(e) { console.error(e); }
-  };
+  const published = data ? data.blogs.filter((b) => b.published).length : 0;
+  const unread = data ? data.messages.filter((m) => !m.read).length : 0;
+  const featured = data ? data.projects.filter((p) => p.featured).length : 0;
 
-  const generateChartData = async () => {
-    try {
-      const [pr, bl, ms] = await Promise.all([
-        contentService.getProjects(),
-        contentService.getBlogs(),
-        contentService.getMessages()
-      ]);
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const data = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        const s = new Date(d.getFullYear(), d.getMonth(), 1);
-        const e = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-        const count = (arr) => arr?.data?.data?.filter(x => { const t = new Date(x.created_at); return t >= s && t <= e; }).length || 0;
-        data.push({ month: months[d.getMonth()], projects: count(pr), blogs: count(bl), messages: count(ms) });
-      }
-      setChartData(data);
-    } catch(e) { console.error(e); }
-  };
-
-  const statCards = [
-    { title: 'Total Projects',   value: stats?.counts?.projects || 0,       icon: Briefcase,    gradient: 'linear-gradient(135deg,#3b82f6,#6366f1)', trend: '+12%', up: true },
-    { title: 'Published Blogs',  value: stats?.counts?.blogs || 0,          icon: FileText,     gradient: 'linear-gradient(135deg,#10b981,#06b6d4)', trend: '+8%',  up: true },
-    { title: 'Unread Messages',  value: stats?.counts?.unreadMessages || 0, icon: MessageSquare,gradient: 'linear-gradient(135deg,#f59e0b,#f97316)', trend: '-3%',  up: false },
-    { title: 'Total Skills',     value: stats?.counts?.skills || 0,         icon: Award,        gradient: 'linear-gradient(135deg,#7c3aed,#ec4899)', trend: '+5%',  up: true },
+  const stats = [
+    { title: 'Projects', value: data?.projects.length, note: `${featured} featured`, icon: Briefcase, tone: 'bg-marigold text-ink' },
+    { title: 'Blog posts', value: data?.blogs.length, note: `${published} published`, icon: FileText, tone: 'bg-dusk text-white' },
+    { title: 'Unread messages', value: unread, note: `${data?.messages.length ?? 0} in total`, icon: MessageSquare, tone: 'bg-ink text-porcelain' },
+    { title: 'Skills', value: data?.skills.length, note: 'shown on the portfolio', icon: Award, tone: 'bg-sand text-ink' },
   ];
 
-  const typeBadge = (type) => {
-    const map = { project: { bg: '#3b82f620', color: '#93c5fd', label: 'Project' }, blog: { bg: '#10b98120', color: '#6ee7b7', label: 'Blog' }, message: { bg: '#f59e0b20', color: '#fcd34d', label: 'Message' } };
-    const s = map[type] || { bg: '#7c3aed20', color: '#c4b5fd', label: type };
-    return <span style={{ background: s.bg, color: s.color, fontSize: '0.65rem', fontWeight: 600, padding: '2px 8px', borderRadius: '99px' }}>{s.label}</span>;
-  };
+  const actions = [
+    { label: 'Add a project', to: '/projects', icon: Briefcase },
+    { label: 'Write a blog post', to: '/blogs', icon: FileText },
+    { label: 'Read messages', to: '/messages', icon: MessageSquare },
+    { label: 'See analytics', to: '/analytics', icon: TrendingUp },
+  ];
 
-  // Custom tooltip for chart
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: '10px', padding: '10px 14px' }}>
-        <p style={{ color: '#9490b5', fontSize: '0.75rem', marginBottom: '6px' }}>{label}</p>
-        {payload.map(p => (
-          <p key={p.dataKey} style={{ color: p.color, fontSize: '0.82rem' }}>
-            {p.name}: <strong style={{ color: '#f1f0ff' }}>{p.value}</strong>
-          </p>
-        ))}
-      </div>
-    );
-  };
+  const latestMessages = data ? [...data.messages].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3) : [];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Header */}
+    <div className="flex flex-col gap-6">
       <div>
-        <h1 className="page-title">Dashboard</h1>
-        <p style={{ color: '#9490b5', fontSize: '0.85rem', marginTop: '4px' }}>Welcome back! Here's your portfolio overview.</p>
+        <h1 className="text-3xl font-semibold md:text-4xl">Dashboard</h1>
+        <p className="mt-1 text-gray-600">An overview of what is on your portfolio right now.</p>
       </div>
 
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }} className="grid-cols-4-resp">
-        {statCards.map((s, i) => {
+      {state.status === 'error' && (
+        <ErrorMessage message="Could not load the dashboard. The server may be waking up." onRetry={retry} />
+      )}
+
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {stats.map((s) => {
           const Icon = s.icon;
           return (
-            <div key={i} className="stat-card">
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <div style={{ width: '38px', height: '38px', background: s.gradient, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={17} color="white" />
-                </div>
-                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: s.up ? '#86efac' : '#fca5a5', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                  {s.up ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
-                  {s.trend}
-                </span>
+            <div key={s.title} className="stat-card">
+              <span className={`grid size-10 place-items-center rounded-xl ${s.tone}`}>
+                <Icon size={18} />
+              </span>
+              <div>
+                {loading ? (
+                  <div className="skeleton h-9 w-16" />
+                ) : (
+                  <p className="font-display text-4xl font-semibold leading-none">{s.value ?? '–'}</p>
+                )}
+                <p className="mt-2 text-sm font-medium">{s.title}</p>
+                <p className="text-xs text-gray-500">{loading ? '\u00a0' : s.note}</p>
               </div>
-              {isLoading
-                ? <div className="skeleton" style={{ height: '2rem', width: '60%', marginBottom: '4px' }} />
-                : <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.75rem', color: '#f1f0ff', lineHeight: 1 }}>{s.value}</p>
-              }
-              <p style={{ color: '#9490b5', fontSize: '0.78rem', marginTop: '4px' }}>{s.title}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Chart + Quick actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }} className="grid-cols-2-resp">
-        {/* Chart */}
-        <Card title="Performance Overview" subtitle="Last 6 months">
-          {chartData.length > 0 ? (
-            <div style={{ height: 240 }}>
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Card title="Activity by month" subtitle="New items in the last six months" className="xl:col-span-2">
+          {loading ? (
+            <div className="skeleton h-64 w-full" />
+          ) : (
+            <div className="h-64" role="img" aria-label="Line chart of new projects, blogs and messages per month">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(124,58,237,0.08)" />
-                  <XAxis dataKey="month" stroke="#524f6e" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#524f6e" tick={{ fontSize: 11 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: '0.75rem', color: '#9490b5' }} />
-                  <Line type="monotone" dataKey="projects" stroke="#7c3aed" strokeWidth={2} dot={false} name="Projects" />
-                  <Line type="monotone" dataKey="blogs"    stroke="#06b6d4" strokeWidth={2} dot={false} name="Blogs" />
-                  <Line type="monotone" dataKey="messages" stroke="#ec4899" strokeWidth={2} dot={false} name="Messages" />
+                <LineChart data={chart}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ece6db" vertical={false} />
+                  <XAxis dataKey="month" stroke="#a39c90" tick={{ fontSize: 12 }} tickLine={false} />
+                  <YAxis stroke="#a39c90" tick={{ fontSize: 12 }} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
+                  {SERIES.map((s) => (
+                    <Line key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2.5} dot={false} />
+                  ))}
                 </LineChart>
               </ResponsiveContainer>
-            </div>
-          ) : (
-            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ textAlign: 'center' }}>
-                <BarChart3 size={32} color="#524f6e" style={{ margin: '0 auto 8px' }} />
-                <p style={{ color: '#524f6e', fontSize: '0.82rem' }}>Loading chart data...</p>
-              </div>
             </div>
           )}
         </Card>
 
-        {/* Quick actions */}
-        <Card title="Quick Actions">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[
-              { label: 'Add New Project', href: '/projects', icon: Briefcase, color: '#3b82f6' },
-              { label: 'Write Blog Post', href: '/blogs',    icon: FileText,  color: '#06b6d4' },
-              { label: 'View Messages',   href: '/messages', icon: MessageSquare, color: '#f59e0b' },
-              { label: 'Analytics',       href: '/analytics',icon: TrendingUp, color: '#7c3aed' },
-            ].map((a) => {
+        <Card title="Quick actions">
+          <ul className="flex flex-col gap-2">
+            {actions.map((a) => {
               const Icon = a.icon;
               return (
-                <a key={a.href} href={a.href} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid var(--border)', transition: 'all 0.2s', color: '#9490b5' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.background = 'rgba(124,58,237,0.05)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'none'; }}
-                >
-                  <div style={{ width: '30px', height: '30px', background: `${a.color}20`, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={14} color={a.color} />
-                  </div>
-                  <span style={{ fontSize: '0.83rem', color: '#c4b5fd', fontWeight: 500 }}>{a.label}</span>
-                </a>
+                <li key={a.to}>
+                  <Link to={a.to} className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium hover:border-ink">
+                    <span className="flex items-center gap-3"><Icon size={16} className="text-dusk" /> {a.label}</span>
+                    <ArrowUpRight size={14} className="text-gray-400" />
+                  </Link>
+                </li>
               );
             })}
-          </div>
+            <li>
+              <a href={SITE_URL} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-xl bg-marigold px-4 py-3 text-sm font-semibold text-ink hover:brightness-95">
+                Open the portfolio <ExternalLink size={14} />
+              </a>
+            </li>
+          </ul>
         </Card>
       </div>
 
-      {/* Recent activity */}
-      <Card title="Recent Activity" subtitle="Latest actions in your CMS"
-        headerActions={
-          <button onClick={fetchRecentActivities} style={{ fontSize: '0.75rem', color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer' }}>
-            Refresh
-          </button>
-        }
-      >
-        {recentActivities.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-            <Activity size={32} color="#524f6e" style={{ margin: '0 auto 8px', display: 'block' }} />
-            <p style={{ color: '#524f6e', fontSize: '0.85rem' }}>No recent activity</p>
-          </div>
-        ) : (
-          <div className="table-wrap">
-            <table className="dark-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Time</th>
-                  <th>Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentActivities.map((a) => (
-                  <tr key={a.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '28px', height: '28px', background: 'linear-gradient(135deg,#7c3aed,#ec4899)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'white' }}>{a.user[0]}</span>
-                        </div>
-                        <span style={{ fontWeight: 500, color: '#f1f0ff', fontSize: '0.82rem' }}>{a.user}</span>
-                      </div>
-                    </td>
-                    <td style={{ color: '#9490b5', fontSize: '0.82rem' }}>{a.action}</td>
-                    <td style={{ color: '#524f6e', fontSize: '0.78rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Calendar size={11} /> {a.time}
-                      </div>
-                    </td>
-                    <td>{typeBadge(a.type)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      {/* Recent messages */}
-      {stats?.recent?.messages?.length > 0 && (
-        <Card title="Recent Messages"
-          headerActions={
-            <a href="/messages" style={{ fontSize: '0.75rem', color: '#8b5cf6', textDecoration: 'none' }}>View All</a>
-          }
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {stats.recent.messages.slice(0, 3).map((m, i) => (
-              <div key={i} style={{ padding: '0.85rem', background: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.1)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 600, color: '#f1f0ff', fontSize: '0.85rem' }}>{m.name}</p>
-                  <p style={{ color: '#9490b5', fontSize: '0.78rem', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {m.message?.substring(0, 80)}...
-                  </p>
-                  <p style={{ color: '#524f6e', fontSize: '0.72rem', marginTop: '4px' }}>{m.email}</p>
-                </div>
-                <span className={m.read ? 'badge badge-purple' : 'badge badge-blue'} style={{ flexShrink: 0 }}>
-                  {m.read ? 'Read' : 'Unread'}
-                </span>
-              </div>
-            ))}
-          </div>
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Card title="Recent activity" subtitle="Newest projects, posts and messages" className="xl:col-span-2">
+          {loading ? (
+            <div className="skeleton h-40 w-full" />
+          ) : activity.length === 0 ? (
+            <p className="py-8 text-center text-gray-500">Nothing yet. New content will show up here.</p>
+          ) : (
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr><th>What happened</th><th>Details</th><th>When</th><th>Type</th></tr>
+                </thead>
+                <tbody>
+                  {activity.map((a) => (
+                    <tr key={a.id}>
+                      <td className="font-medium text-ink">{a.label}</td>
+                      <td className="max-w-[16rem] truncate">{a.detail}</td>
+                      <td className="whitespace-nowrap"><span className="inline-flex items-center gap-1.5"><Calendar size={12} /> {a.ago}</span></td>
+                      <td><span className={`badge ${BADGE[a.type]}`}>{TYPE_LABEL[a.type]}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
-      )}
+
+        <Card
+          title="Latest messages"
+          headerActions={<Link to="/messages" className="text-sm font-medium text-dusk underline">View all</Link>}
+        >
+          {loading ? (
+            <div className="skeleton h-32 w-full" />
+          ) : latestMessages.length === 0 ? (
+            <p className="py-6 text-center text-gray-500">No messages yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {latestMessages.map((m) => (
+                <li key={m.id} className="rounded-xl border border-gray-200 p-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold">{m.name}</p>
+                    <span className={`badge ${m.read ? 'badge-purple' : 'badge-yellow'}`}>{m.read ? 'Read' : 'New'}</span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-sm text-gray-600">{m.message}</p>
+                  <p className="mt-1.5 text-xs text-gray-500">{m.email} · {timeAgo(m.created_at)}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };

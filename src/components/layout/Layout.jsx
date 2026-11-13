@@ -1,44 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 const Layout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { pathname } = useLocation();
+  // The mobile menu counts as open only for the page it was opened on,
+  // so it closes by itself when you navigate.
+  const [openFor, setOpenFor] = useState(null);
+  const sidebarOpen = openFor === pathname;
+  const close = () => setOpenFor(null);
 
-  // Close sidebar on route change / resize
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1025) setSidebarOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
-    <div className="admin-layout" style={{ background: 'var(--bg-primary)', minHeight: '100vh' }}>
+    <div className="admin-shell">
+      <a href="#main" className="skip-link">Skip to content</a>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 35,
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(4px)'
-          }}
-        />
-      )}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={close} aria-hidden="true" />}
+      <Sidebar isOpen={sidebarOpen} onClose={close} />
 
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
-
-      <div className="admin-main" style={{ marginLeft: 'var(--sidebar-width)' }}>
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="admin-content fade-in">
+      <div className="admin-main">
+        <Header onMenuClick={() => setOpenFor(pathname)} />
+        <main id="main" className="admin-content fade-in" key={pathname}>
           <Outlet />
         </main>
       </div>

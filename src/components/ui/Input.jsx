@@ -1,35 +1,36 @@
-import React, { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 
 const Input = forwardRef(({
-  label, error, helperText,
-  className = '', containerClassName = '',
-  icon: Icon, ...props
+  label, error, helperText, className = '', containerClassName = '',
+  icon: Icon, id, ...props
 }, ref) => {
+  const autoId = useId();
+  const fieldId = id || autoId;
   return (
-    <div className={containerClassName} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+    <div className={`flex flex-col gap-1.5 ${containerClassName}`}>
       {label && (
-        <label className="form-label">
+        <label htmlFor={fieldId} className="form-label">
           {label}
-          {props.required && <span className="required" style={{ color: '#f87171', marginLeft: '3px' }}>*</span>}
+          {props.required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}
         </label>
       )}
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         {Icon && (
-          <span className="input-icon">
-            <Icon size={14} />
+          <span className="input-icon" aria-hidden="true">
+            <Icon size={15} />
           </span>
         )}
         <input
           ref={ref}
-          className={`dark-input ${error ? 'error' : ''} ${Icon ? 'input-icon-wrap' : ''} ${className}`}
-          style={Icon ? { paddingLeft: '34px' } : undefined}
+          id={fieldId}
+          aria-invalid={error ? 'true' : undefined}
+          className={`field-input ${error ? 'error' : ''} ${className}`}
+          style={Icon ? { paddingLeft: '38px' } : undefined}
           {...props}
         />
       </div>
       {(error || helperText) && (
-        <p style={{ fontSize: '0.72rem', color: error ? '#f87171' : 'var(--text-muted)', marginTop: '1px' }}>
-          {error || helperText}
-        </p>
+        <p className={error ? 'form-error' : 'form-helper'}>{error || helperText}</p>
       )}
     </div>
   );

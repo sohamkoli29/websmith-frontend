@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Lock, Mail, Eye, EyeOff, Code2, AlertCircle } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const schema = yup.object({
-  email:    yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().min(6, 'Min 6 characters').required('Password is required'),
+  email: yup.string().email('Enter a valid email').required('Email is required'),
+  password: yup.string().min(6, 'At least 6 characters').required('Password is required'),
 });
 
 const Login = () => {
@@ -21,15 +24,17 @@ const Login = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
-    defaultValues: { email: '', password: '' }
+    defaultValues: { email: '', password: '' },
   });
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate(location.state?.from?.pathname || '/', { replace: true });
-    }
-  }, [authLoading, isAuthenticated]);
+  const from = location.state?.from?.pathname || '/';
 
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) navigate(from, { replace: true });
+  }, [authLoading, isAuthenticated, navigate, from]);
+
+  // Clear any old error when leaving the page. Run once on purpose.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => clearError(), []);
 
   const onSubmit = async (data) => {
@@ -42,124 +47,77 @@ const Login = () => {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '36px', height: '36px', border: '2px solid rgba(124,58,237,0.2)', borderTopColor: '#7c3aed', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <div className="grid min-h-screen place-items-center bg-porcelain">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', background: 'var(--bg-primary)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '1rem', position: 'relative', overflow: 'hidden'
-    }}>
-      {/* Background orbs */}
-      <div style={{ position: 'absolute', width: 500, height: 500, background: 'radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)', top: '-100px', right: '-100px', borderRadius: '50%', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', width: 350, height: 350, background: 'radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%)', bottom: '-50px', left: '5%', borderRadius: '50%', pointerEvents: 'none' }} />
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-porcelain px-4 py-10">
+      {/* soft decorative shapes, echoing the portfolio's marigold and dusk-blue objects */}
+      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-marigold/25 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-16 size-72 rounded-full bg-dusk/10 blur-3xl" />
 
-      <div style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: '56px', height: '56px',
-            background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
-            borderRadius: '16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 1rem',
-            boxShadow: '0 12px 32px rgba(124,58,237,0.35)'
-          }}>
-            <Code2 size={26} color="white" />
-          </div>
-          <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.6rem', color: '#f1f0ff' }}>
-            Portfolio <span style={{ background: 'linear-gradient(135deg,#7c3aed,#ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CMS</span>
-          </h1>
-          <p style={{ color: '#9490b5', fontSize: '0.85rem', marginTop: '4px' }}>Sign in to your admin account</p>
+      <div className="relative w-full max-w-md fade-in">
+        <div className="mb-8 text-center">
+          <span className="mx-auto mb-5 grid size-14 place-items-center rounded-2xl bg-marigold font-display text-2xl font-bold text-ink">SK</span>
+          <h1 className="text-4xl font-semibold">Portfolio CMS</h1>
+          <p className="mt-2 text-gray-600">Sign in to manage your portfolio content.</p>
         </div>
 
-        {/* Card */}
-        <div className="dark-card" style={{ padding: '2rem' }}>
-          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-
-            {/* Error */}
+        <div className="card p-8">
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
             {(loginError || error) && (
-              <div className="alert-error" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertCircle size={14} color="#f87171" />
+              <div role="alert" className="alert alert-error items-center">
+                <AlertCircle size={16} className="shrink-0" />
                 <span>{loginError || error}</span>
               </div>
             )}
 
-            {/* Email */}
-            <div>
-              <label className="form-label">Email Address</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#524f6e' }} />
-                <input
-                  type="email"
-                  placeholder="admin@portfolio.com"
-                  disabled={isLoading}
-                  className={`dark-input ${errors.email ? 'error' : ''}`}
-                  style={{ paddingLeft: '32px' }}
-                  {...register('email')}
-                />
-              </div>
-              {errors.email && <p className="form-error">{errors.email.message}</p>}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="form-label">Password</label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#524f6e' }} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  disabled={isLoading}
-                  className={`dark-input ${errors.password ? 'error' : ''}`}
-                  style={{ paddingLeft: '32px', paddingRight: '36px' }}
-                  {...register('password')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#524f6e', cursor: 'pointer', display: 'flex' }}
-                >
-                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-              {errors.password && <p className="form-error">{errors.password.message}</p>}
-            </div>
-
-            {/* Remember */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input type="checkbox" style={{ accentColor: '#7c3aed', width: '14px', height: '14px' }} />
-                <span style={{ fontSize: '0.78rem', color: '#9490b5' }}>Remember me</span>
-              </label>
-              <a href="#" style={{ fontSize: '0.78rem', color: '#8b5cf6', textDecoration: 'none' }}>Forgot password?</a>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
+            <Input
+              label="Email address"
+              type="email"
+              autoComplete="email"
+              placeholder="admin@portfolio.com"
+              icon={Mail}
               disabled={isLoading}
-              className="btn-primary"
-              style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
-            >
-              {isLoading ? (
-                <><div style={{ width: '14px', height: '14px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Signing In...</>
-              ) : (
-                'Sign In'
-              )}
-            </button>
+              error={errors.email?.message}
+              {...register('email')}
+            />
+
+            <div className="relative">
+              <Input
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                icon={Lock}
+                disabled={isLoading}
+                error={errors.password?.message}
+                {...register('password')}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-3 top-[34px] grid size-7 place-items-center rounded-full text-gray-500 hover:text-ink"
+              >
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+
+            <Button type="submit" variant="primary" size="lg" isLoading={isLoading} className="w-full">
+              {isLoading ? 'Signing in…' : 'Sign in'}
+            </Button>
           </form>
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#524f6e', marginTop: '1.5rem' }}>
-          © {new Date().getFullYear()} Portfolio CMS · Secured by JWT authentication
+        <p className="mt-6 text-center text-xs text-gray-500">
+          © {new Date().getFullYear()} Soham Koli · Private admin area
         </p>
       </div>
-    </div>
+    </main>
   );
 };
 
